@@ -108,8 +108,10 @@ parameter of the explorer.
                 break
         return banditNumber            
 
-def main(iterations):
-    bandits = [Bandit(0.5,1), Bandit(0,2), Bandit(1,2)]
+def main(numBandits, iterations):
+    """Run the n-bandit propblem with (numBandits) bandits and with (iterations) games."""
+    
+    bandits = [Bandit(random.uniform(1,10), random.uniform(1, 5) ) for _b in range(numBandits)]
     rewardEstimates = [b.getReward() for b in bandits]
 
     strategies = [
@@ -125,6 +127,7 @@ def main(iterations):
     for strat in strategies:
         strat.initialize(rewardEstimates)
 
+    # Run the simulation for each strategy, recording the gains
     gainHistories = [[0] for s in strategies]
     gains = [0 for s in strategies]
     for n in range(iterations):
@@ -135,10 +138,12 @@ def main(iterations):
             gainHistories[numberStrat].append(gains[numberStrat])
             strat.receiveReward(chosenBandit, reward)
 
+    # Print out total gain for each strategy as the simplest measure of success
     for (s,g) in zip(strategies, gains):
         print( "{} gained {:.0f}".format(s.describe(), g) )
 
-
+    # Plot the gains history for each strategy to see how quickly each strategy learned
+    # and what slope it ended settling on.
     handles = []
     for (hist, s) in zip(gainHistories, strategies):
         h, = plt.plot(hist, label=s.describe())
