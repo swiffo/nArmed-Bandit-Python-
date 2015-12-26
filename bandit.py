@@ -43,10 +43,11 @@ class EpsilonExplorer(RewardEstimator):
         self.epsilon = epsilon
 
     def describe(self):
+        """Human-readable descriptor"""
         return "Epsilon-explorer({:.1%})".format(self.epsilon)
 
     def chooseBandit(self):
-        """Outputs bandit number to play"""
+        """Returns bandit number to play"""
         rewardEstimates = self.rewardEstimates()
         numBandits = len(rewardEstimates)
         
@@ -62,15 +63,21 @@ class EpsilonExplorer(RewardEstimator):
             return bestBandit
 
 class DescendingEpsilonExplorer(EpsilonExplorer):
+    """A strategy which is greedy some of the time and exploratory the rest of the time.
+
+Chance of exploration is epsilon which decreases with time based on the descent rate.
+"""
     def __init__(self, epsilon, descentRate):
         self.originalEpsilon = epsilon
         EpsilonExplorer.__init__(self, epsilon)
         self.descentRate = descentRate
 
     def describe(self):
+        """Human-readable descriptor"""
         return "Descending epsilon-explorer(eps={:.1%}, desc={:.5f})".format(self.originalEpsilon, self.descentRate)
 
     def chooseBandit(self):
+        """Returns bandit numer to play"""
         self.epsilon *= self.descentRate
         return EpsilonExplorer.chooseBandit(self)
         
@@ -86,10 +93,11 @@ parameter of the explorer.
         self.temperature = temperature
 
     def describe(self):
+        """Returns human-readable descriptor"""
         return "Boltzmann-explorer({:.1f}K)".format(self.temperature)
 
     def chooseBandit(self):
-        """Outputs bandit number to play."""
+        """Returns bandit number to play."""
 
         weights = [math.exp(-e/self.temperature) for e in self.rewardEstimates()]
         total = sum(weights)
