@@ -108,7 +108,7 @@ parameter of the explorer.
                 break
         return banditNumber            
 
-def main():
+def main(iterations):
     bandits = [Bandit(0.5,1), Bandit(0,2), Bandit(1,2)]
     rewardEstimates = [b.getReward() for b in bandits]
 
@@ -126,7 +126,7 @@ def main():
         strat.initialize(rewardEstimates)
 
     gains = [0 for s in strategies]
-    for n in range(10000):
+    for n in range(iterations):
         for numberStrat, strat in enumerate(strategies):
             chosenBandit = strat.chooseBandit()
             reward = bandits[chosenBandit].getReward()
