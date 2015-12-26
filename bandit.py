@@ -1,4 +1,4 @@
-import math, random
+import math, random, matplotlib.pyplot as plt
 
 class Bandit:
     """A one-armed bandit that outputs a normally distributed reward when used.
@@ -74,7 +74,7 @@ Chance of exploration is epsilon which decreases with time based on the descent 
 
     def describe(self):
         """Human-readable descriptor"""
-        return "Descending epsilon-explorer(eps={:.1%}, desc={:.5f})".format(self.originalEpsilon, self.descentRate)
+        return "Descending epsilon-explorer(eps={:.1%}, desc={:.3f})".format(self.originalEpsilon, self.descentRate)
 
     def chooseBandit(self):
         """Returns bandit numer to play"""
@@ -83,8 +83,8 @@ Chance of exploration is epsilon which decreases with time based on the descent 
         
 
 class BoltzmannExplorer(RewardEstimator):
-    """A strategy which constantly explores but weights its choices towards high-reward choices based on
-the Boltzmann-Gibbs distribution.
+    """A strategy which constantly explores but weights its choices towards high-reward
+outcomes based on the Boltzmann-Gibbs distribution.
 
 Each reward (/energy level) is weighted proportionally to exp(-Energy/temperature). Temperature is a
 parameter of the explorer.
@@ -125,16 +125,26 @@ def main(iterations):
     for strat in strategies:
         strat.initialize(rewardEstimates)
 
+    gainHistories = [[0] for s in strategies]
     gains = [0 for s in strategies]
     for n in range(iterations):
         for numberStrat, strat in enumerate(strategies):
             chosenBandit = strat.chooseBandit()
             reward = bandits[chosenBandit].getReward()
             gains[numberStrat] += reward
+            gainHistories[numberStrat].append(gains[numberStrat])
             strat.receiveReward(chosenBandit, reward)
 
     for (s,g) in zip(strategies, gains):
         print( "{} gained {:.0f}".format(s.describe(), g) )
+
+
+    handles = []
+    for (hist, s) in zip(gainHistories, strategies):
+        h, = plt.plot(hist, label=s.describe())
+        handles.append(h)
+    plt.legend(handles=handles, loc=2)
+    plt.show()
      
 
     
