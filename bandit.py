@@ -37,10 +37,13 @@ class RewardEstimator:
             
 class EpsilonExplorer(RewardEstimator):
     """A strategy which is greedy most of the time (1-epsilon) and exploratory some of the time (epsilon)."""
-    epsilon = 0
+    epsilon = None
     
     def __init__(self, epsilon):
         self.epsilon = epsilon
+
+    def describe(self):
+        return "Epsilon-explorer({:.1%})".format(self.epsilon)
 
     def chooseBandit(self):
         """Outputs bandit number to play"""
@@ -58,6 +61,20 @@ class EpsilonExplorer(RewardEstimator):
                     bestBandit = k
             return bestBandit
 
+class DescendingEpsilonExplorer(EpsilonExplorer):
+    def __init__(self, epsilon, descentRate):
+        self.originalEpsilon = epsilon
+        EpsilonExplorer.__init__(self, epsilon)
+        self.descentRate = descentRate
+
+    def describe(self):
+        return "Descending epsilon-explorer(eps={:.1%}, desc={:.5f})".format(self.originalEpsilon, self.descentRate)
+
+    def chooseBandit(self):
+        self.epsilon *= self.descentRate
+        return EpsilonExplorer.chooseBandit(self)
+        
+
 class BoltzmannExplorer(RewardEstimator):
     """A strategy which constantly explores but weights its choices towards high-reward choices based on
 the Boltzmann-Gibbs distribution.
@@ -67,6 +84,9 @@ parameter of the explorer.
 """
     def __init__(self, temperature):
         self.temperature = temperature
+
+    def describe(self):
+        return "Boltzmann-explorer({:.1f}K)".format(self.temperature)
 
     def chooseBandit(self):
         """Outputs bandit number to play."""
@@ -85,8 +105,10 @@ def main():
     rewardEstimates = [b.getReward() for b in bandits]
 
     strategies = [
+        EpsilonExplorer(0),
         EpsilonExplorer(0.01),
         EpsilonExplorer(0.1),
+        DescendingEpsilonExplorer(0.1, 0.999),
         BoltzmannExplorer(50),
         BoltzmannExplorer(270),
         BoltzmannExplorer(10),
@@ -103,7 +125,8 @@ def main():
             gains[numberStrat] += reward
             strat.receiveReward(chosenBandit, reward)
 
-    print(gains)
+    for (s,g) in zip(strategies, gains):
+        print( "{} gained {:.0f}".format(s.describe(), g) )
      
 
     
