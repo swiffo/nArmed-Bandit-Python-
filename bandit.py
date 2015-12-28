@@ -4,9 +4,6 @@ class Bandit:
     """A one-armed bandit that outputs a normally distributed reward when used.
     Distribution is N(mu, sigma).
 """
-    mu = 0
-    sigma = 1
-
     def __init__(self, mu, sigma):
         """Sets the normal distribution parameters for the reward scheme"""
         self.mu = mu
@@ -17,12 +14,19 @@ class Bandit:
         return random.gauss(self.mu, self.sigma)
 
 class RewardEstimator:
-    """Tracks estimates of rewards for n bandits."""
+    """Tracks estimates of rewards for n bandits.
 
-    estimates = None
+Must be initialized with one observation for each bandit. The rewards are estimates as simple
+averages of past rewards.
+"""
+
+    estimates = None # Set to None to make it clear whether the object was initialized
 
     def initialize(self, firstEstimates):
         """Sets the first estimate of each bandit's reward based on the input list"""
+
+        # We store estimates as (current estimate, number of observations the estimate is based on)
+        # The observation count is needed when updating the estimate with new observations.
         self.estimates = [(e,1) for e in firstEstimates]
 
     def receiveReward(self, banditNumber, reward):
@@ -37,8 +41,7 @@ class RewardEstimator:
             
 class EpsilonExplorer(RewardEstimator):
     """A strategy which is greedy most of the time (1-epsilon) and exploratory some of the time (epsilon)."""
-    epsilon = None
-    
+
     def __init__(self, epsilon):
         self.epsilon = epsilon
 
