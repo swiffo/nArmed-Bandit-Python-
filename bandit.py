@@ -32,7 +32,7 @@ averages of past rewards.
     def receiveReward(self, banditNumber, reward):
         """Updates the reward estimate for bandit no. banditNumber based on the new reward"""
         (currentEstimate, currentCount) = self.estimates[banditNumber]
-        newEstimate = (currentEstimate*currentCount + reward) / (currentCount + 1)
+        newEstimate = currentEstimate + (reward - currentEstimate ) / (currentCount+1)
         self.estimates[banditNumber] = (newEstimate, currentCount + 1)
 
     def rewardEstimates(self):
