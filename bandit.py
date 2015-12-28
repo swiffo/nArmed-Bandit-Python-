@@ -13,6 +13,9 @@ class Bandit:
         """Returns normaily distributed reward"""
         return random.gauss(self.mu, self.sigma)
 
+    def describe(self):
+        return "Bandit({mu:.1f}, {sigma:.1f})".format(mu=self.mu, sigma=self.sigma)
+
 class RewardEstimator:
     """Tracks estimates of rewards for n bandits.
 
@@ -117,6 +120,9 @@ def main(numBandits, iterations):
     bandits = [Bandit(random.uniform(1,10), random.uniform(1, 5) ) for _b in range(numBandits)]
     rewardEstimates = [b.getReward() for b in bandits]
 
+    print("*** Bandits and initial reward estimates ***")
+    print("\n".join(["{bandit} with estimate {est:.1f}".format(bandit=b.describe(), est=e) for (b,e) in zip(bandits, rewardEstimates)]))
+          
     strategies = [
         EpsilonExplorer(0),
         EpsilonExplorer(0.01),
@@ -138,10 +144,11 @@ def main(numBandits, iterations):
             chosenBandit = strat.chooseBandit()
             reward = bandits[chosenBandit].getReward()
             gains[numberStrat] += reward
-            gainHistories[numberStrat].append(gains[numberStrat])
+            gainHistories[numberStrat].append(gains[numberStrat]/(n+1))
             strat.receiveReward(chosenBandit, reward)
 
     # Print out total gain for each strategy as the simplest measure of success
+    print("\n*** Total rewards accumulated ***")
     for (s,g) in zip(strategies, gains):
         print( "{} gained {:.0f}".format(s.describe(), g) )
 
@@ -151,7 +158,8 @@ def main(numBandits, iterations):
     for (hist, s) in zip(gainHistories, strategies):
         h, = plt.plot(hist, label=s.describe())
         handles.append(h)
-    plt.legend(handles=handles, loc=2)
+    plt.legend(handles=handles, loc=4) # Lower right
+    plt.title('Average Rewards')
     plt.show()
      
 
