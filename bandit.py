@@ -112,7 +112,22 @@ parameter of the explorer.
             choice -= weight
             if choice < 0:
                 break
-        return banditNumber            
+        return banditNumber
+
+def getStrategies(rewardEstimates):
+    """Return list of strategies initialized wiht rewardEstimates"""
+    strategies = [
+        EpsilonExplorer(0),
+        EpsilonExplorer(0.01),
+        EpsilonExplorer(0.1),
+        DescendingEpsilonExplorer(0.1, 0.999),
+        BoltzmannExplorer(1),
+        BoltzmannExplorer(0.5),
+        BoltzmannExplorer(2),
+    ]    
+    for strat in strategies:
+        strat.initialize(rewardEstimates)
+    return strategies
 
 def main(numBandits, iterations):
     """Run the n-bandit propblem with (numBandits) bandits and with (iterations) games."""
@@ -124,20 +139,9 @@ def main(numBandits, iterations):
 
     print("*** Bandits and initial reward estimates ***")
     print("\n".join(["{bandit} with estimate {est:.1f}".format(bandit=b.describe(), est=e) for (b,e) in zip(bandits, rewardEstimates)]))
-          
-    strategies = [
-        EpsilonExplorer(0),
-        EpsilonExplorer(0.01),
-        EpsilonExplorer(0.1),
-        DescendingEpsilonExplorer(0.1, 0.999),
-        BoltzmannExplorer(1),
-        BoltzmannExplorer(0.5),
-        BoltzmannExplorer(2),
-    ]
-    
-    for strat in strategies:
-        strat.initialize(rewardEstimates)
 
+    strategies = getStrategies(rewardEstimates)
+ 
     # Run the simulation for each strategy, recording the gains
     gainHistories = [[0] for s in strategies]
     gains = [0 for s in strategies]
