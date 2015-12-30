@@ -96,7 +96,7 @@ Each reward (/energy level) is weighted proportionally to exp(-Energy/temperatur
 parameter of the explorer.
 """
     def __init__(self, temperature):
-        self.temperature = temperature
+        self.temperature = temperature # The higher the temperature, the more equalisation of choice weights
 
     def describe(self):
         """Returns human-readable descriptor"""
@@ -105,9 +105,9 @@ parameter of the explorer.
     def chooseBandit(self):
         """Returns bandit number to play."""
 
-        weights = [math.exp(-e/self.temperature) for e in self.rewardEstimates()]
+        weights = [math.exp(estimate/self.temperature) for estimate in self.rewardEstimates()]
         total = sum(weights)
-        choice = total * random.uniform(0, total)
+        choice = random.uniform(0, total)
         for banditNumber, weight in enumerate(weights):
             choice -= weight
             if choice < 0:
@@ -130,9 +130,9 @@ def main(numBandits, iterations):
         EpsilonExplorer(0.01),
         EpsilonExplorer(0.1),
         DescendingEpsilonExplorer(0.1, 0.999),
-        BoltzmannExplorer(50),
-        BoltzmannExplorer(270),
-        BoltzmannExplorer(10),
+        BoltzmannExplorer(1),
+        BoltzmannExplorer(0.5),
+        BoltzmannExplorer(2),
     ]
     
     for strat in strategies:
