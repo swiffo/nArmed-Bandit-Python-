@@ -119,6 +119,8 @@ def main(numBandits, iterations):
     
     bandits = [Bandit(random.uniform(1,10), random.uniform(1, 5) ) for _b in range(numBandits)]
     rewardEstimates = [b.getReward() for b in bandits]
+    expectedRewards = [b.mu for b in bandits]
+    bestBanditChoice = expectedRewards.index(max(expectedRewards))
 
     print("*** Bandits and initial reward estimates ***")
     print("\n".join(["{bandit} with estimate {est:.1f}".format(bandit=b.describe(), est=e) for (b,e) in zip(bandits, rewardEstimates)]))
@@ -139,10 +141,15 @@ def main(numBandits, iterations):
     # Run the simulation for each strategy, recording the gains
     gainHistories = [[0] for s in strategies]
     gains = [0 for s in strategies]
+    choiceCorrectness = [[0] for s in strategies] # Stores average correctness of choice; starts with 0 for ease of implementation
+    
     for n in range(iterations):
         for numberStrat, strat in enumerate(strategies):
             chosenBandit = strat.chooseBandit()
             reward = bandits[chosenBandit].getReward()
+            choiceCorrectness[numberStrat].append(
+                choiceCorrectness[numberStrat][len(choiceCorrectness[numberStrat])-1]*n/(n+1) + (chosenBandit==bestBanditChoice)/(n+1)
+            )
             gains[numberStrat] += reward
             gainHistories[numberStrat].append(gains[numberStrat]/(n+1))
             strat.receiveReward(chosenBandit, reward)
@@ -160,6 +167,15 @@ def main(numBandits, iterations):
         handles.append(h)
     plt.legend(handles=handles, loc=4) # Lower right
     plt.title('Average Rewards')
+    plt.show()
+
+    # Plot the average number of best choices over time    
+    handles = []
+    for (correctness, s) in zip(choiceCorrectness, strategies):
+        h, = plt.plot(correctness, label=s.describe())
+        handles.append(h)
+    plt.legend(handles=handles, loc=4) # Lower right
+    plt.title('Average Correctness of Choice')
     plt.show()
      
 
