@@ -1,15 +1,17 @@
-import math, random, matplotlib.pyplot as plt
+import math
+import random
+import matplotlib.pyplot as plt
 
 class Bandit:
     """A one-armed bandit that outputs a normally distributed reward when used.
     Distribution is N(mu, sigma).
-"""
+    """
     def __init__(self, mu, sigma):
         """Sets the normal distribution parameters for the reward scheme"""
         self.mu = mu
         self.sigma = sigma
 
-    def getReward(self):
+    def get_reward(self):
         """Returns normaily distributed reward"""
         return random.gauss(self.mu, self.sigma)
 
@@ -19,26 +21,26 @@ class Bandit:
 class RewardEstimator:
     """Tracks estimates of rewards for n bandits.
 
-Must be initialized with one observation for each bandit. The rewards are estimates as simple
-averages of past rewards.
-"""
+    Must be initialized with one observation for each bandit. The rewards are estimates as simple
+    averages of past rewards.
+    """
 
     estimates = None # Set to None to make it clear whether the object was initialized
 
-    def initialize(self, firstEstimates):
+    def initialize(self, first_estimates):
         """Sets the first estimate of each bandit's reward based on the input list"""
 
         # We store estimates as (current estimate, number of observations the estimate is based on)
         # The observation count is needed when updating the estimate with new observations.
-        self.estimates = [(e,1) for e in firstEstimates]
+        self.estimates = [(e, 1) for e in first_estimates]
 
-    def receiveReward(self, banditNumber, reward):
-        """Updates the reward estimate for bandit no. banditNumber based on the new reward"""
-        (currentEstimate, currentCount) = self.estimates[banditNumber]
-        newEstimate = currentEstimate + (reward - currentEstimate ) / (currentCount+1)
-        self.estimates[banditNumber] = (newEstimate, currentCount + 1)
+    def receive_reward(self, bandit_number, reward):
+        """Updates the reward estimate for bandit no. bandit_number based on the new reward"""
+        (current_estimate, current_count) = self.estimates[bandit_number]
+        new_estimate = current_estimate + (reward - current_estimate ) / (current_count+1)
+        self.estimates[bandit_number] = (new_estimate, current_count + 1)
 
-    def rewardEstimates(self):
+    def reward_estimates(self):
         """Returns list of reward estimates"""
         return [x[0] for x in self.estimates]
             
@@ -52,49 +54,49 @@ class EpsilonExplorer(RewardEstimator):
         """Human-readable descriptor"""
         return "Epsilon-explorer({:.1%})".format(self.epsilon)
 
-    def chooseBandit(self):
+    def choose_bandit(self):
         """Returns bandit number to play"""
-        rewardEstimates = self.rewardEstimates()
-        numBandits = len(rewardEstimates)
+        reward_estimates = self.reward_estimates()
+        num_bandits = len(reward_estimates)
         
         if random.random() < self.epsilon:
-            return random.randrange(numBandits)
+            return random.randrange(num_bandits)
         else:
-            bestReward = rewardEstimates[0]
-            bestBandit = 0
-            for k,v in enumerate(rewardEstimates):
-                if v > bestReward:
-                    bestReward = v
-                    bestBandit = k
-            return bestBandit
+            best_reward = reward_estimates[0]
+            best_bandit = 0
+            for k,v in enumerate(reward_estimates):
+                if v > best_reward:
+                    best_reward = v
+                    best_bandit = k
+            return best_bandit
 
 class DescendingEpsilonExplorer(EpsilonExplorer):
     """A strategy which is greedy some of the time and exploratory the rest of the time.
 
-Chance of exploration is epsilon which decreases with time based on the descent rate.
-"""
-    def __init__(self, epsilon, descentRate):
-        self.originalEpsilon = epsilon
+    Chance of exploration is epsilon which decreases with time based on the descent rate.
+    """
+    def __init__(self, epsilon, descent_rate):
+        self.original_epsilon = epsilon
         EpsilonExplorer.__init__(self, epsilon)
-        self.descentRate = descentRate
+        self.descent_rate = descent_rate
 
     def describe(self):
         """Human-readable descriptor"""
-        return "Descending epsilon-explorer(eps={:.1%}, desc={:.3f})".format(self.originalEpsilon, self.descentRate)
+        return "Descending epsilon-explorer(eps={:.1%}, desc={:.3f})".format(self.original_epsilon, self.descent_rate)
 
-    def chooseBandit(self):
-        """Returns bandit numer to play"""
-        self.epsilon *= self.descentRate
-        return EpsilonExplorer.chooseBandit(self)
+    def choose_bandit(self):
+        """Returns bandit number to play"""
+        self.epsilon *= self.descent_rate
+        return EpsilonExplorer.choose_bandit(self)
         
 
 class BoltzmannExplorer(RewardEstimator):
     """A strategy which constantly explores but weights its choices towards high-reward
-outcomes based on the Boltzmann-Gibbs distribution.
+    outcomes based on the Boltzmann-Gibbs distribution.
 
-Each reward (/energy level) is weighted proportionally to exp(-Energy/temperature). Temperature is a
-parameter of the explorer.
-"""
+    Each reward (/energy level) is weighted proportionally to exp(-Energy/temperature). Temperature is a
+    parameter of the explorer.
+    """
     def __init__(self, temperature):
         self.temperature = temperature # The higher the temperature, the more equalisation of choice weights
 
@@ -102,20 +104,21 @@ parameter of the explorer.
         """Returns human-readable descriptor"""
         return "Boltzmann-explorer({:.1f}K)".format(self.temperature)
 
-    def chooseBandit(self):
+    def choose_bandit(self):
         """Returns bandit number to play."""
 
-        weights = [math.exp(estimate/self.temperature) for estimate in self.rewardEstimates()]
+        weights = [math.exp(estimate/self.temperature) for estimate in self.reward_estimates()]
         total = sum(weights)
         choice = random.uniform(0, total)
-        for banditNumber, weight in enumerate(weights):
+        for bandit_number, weight in enumerate(weights):
             choice -= weight
             if choice < 0:
                 break
-        return banditNumber
+        return bandit_number
 
-def getStrategies(rewardEstimates):
-    """Return list of strategies initialized wiht rewardEstimates"""
+
+def get_strategies(reward_estimates):
+    """Return list of strategies initialized wiht reward_estimates"""
     strategies = [
         EpsilonExplorer(0),
         EpsilonExplorer(0.01),
@@ -126,37 +129,38 @@ def getStrategies(rewardEstimates):
         BoltzmannExplorer(2),
     ]    
     for strat in strategies:
-        strat.initialize(rewardEstimates)
+        strat.initialize(reward_estimates)
     return strategies
 
-def main(numBandits, iterations):
-    """Run the n-bandit propblem with (numBandits) bandits and with (iterations) games."""
+def main(num_bandits, iterations):
+    """Run the n-bandit propblem with (num_bandits) bandits and with (iterations) games."""
     
-    bandits = [Bandit(random.uniform(1,10), random.uniform(1, 5) ) for _b in range(numBandits)]
-    rewardEstimates = [b.getReward() for b in bandits]
-    expectedRewards = [b.mu for b in bandits]
-    bestBanditChoice = expectedRewards.index(max(expectedRewards))
+    bandits = [Bandit(random.uniform(1,10), random.uniform(1, 5) ) for _b in range(num_bandits)]
+    reward_estimates = [b.get_reward() for b in bandits]
+    expected_rewards = [b.mu for b in bandits]
+    best_bandit_choice = expected_rewards.index(max(expected_rewards))
 
     print("*** Bandits and initial reward estimates ***")
-    print("\n".join(["{bandit} with estimate {est:.1f}".format(bandit=b.describe(), est=e) for (b,e) in zip(bandits, rewardEstimates)]))
+    print("\n".join(["{bandit} with estimate {est:.1f}".format(bandit=b.describe(), est=e) for (b,e) in zip(bandits, reward_estimates)]))
 
-    strategies = getStrategies(rewardEstimates)
+    strategies = get_strategies(reward_estimates)
  
     # Run the simulation for each strategy, recording the gains
-    gainHistories = [[0] for s in strategies]
+    gain_histories = [[0] for s in strategies]
     gains = [0 for s in strategies]
-    choiceCorrectness = [[0] for s in strategies] # Stores average correctness of choice; starts with 0 for ease of implementation
+    choice_correctness = [[0] for s in strategies] # Stores average correctness of choice; starts with 0 for ease of implementation
     
     for n in range(iterations):
-        for numberStrat, strat in enumerate(strategies):
-            chosenBandit = strat.chooseBandit()
-            reward = bandits[chosenBandit].getReward()
-            choiceCorrectness[numberStrat].append(
-                choiceCorrectness[numberStrat][len(choiceCorrectness[numberStrat])-1]*n/(n+1) + (chosenBandit==bestBanditChoice)/(n+1)
+        for number_strat, strat in enumerate(strategies):
+            chosen_bandit = strat.choose_bandit()
+            reward = bandits[chosen_bandit].get_reward()
+            choice_correctness[number_strat].append(
+                choice_correctness[number_strat][len(choice_correctness[number_strat])-1]*n/(n+1) 
+                + (chosen_bandit==best_bandit_choice)/(n+1)
             )
-            gains[numberStrat] += reward
-            gainHistories[numberStrat].append(gains[numberStrat]/(n+1))
-            strat.receiveReward(chosenBandit, reward)
+            gains[number_strat] += reward
+            gain_histories[number_strat].append(gains[number_strat]/(n+1))
+            strat.receive_reward(chosen_bandit, reward)
 
     # Print out total gain for each strategy as the simplest measure of success
     print("\n*** Total rewards accumulated ***")
@@ -166,7 +170,7 @@ def main(numBandits, iterations):
     # Plot the gains history for each strategy to see how quickly each strategy learned
     # and what slope it ended settling on.
     handles = []
-    for (hist, s) in zip(gainHistories, strategies):
+    for (hist, s) in zip(gain_histories, strategies):
         h, = plt.plot(hist, label=s.describe())
         handles.append(h)
     plt.legend(handles=handles, loc=4) # Lower right
@@ -175,7 +179,7 @@ def main(numBandits, iterations):
 
     # Plot the average number of best choices over time    
     handles = []
-    for (correctness, s) in zip(choiceCorrectness, strategies):
+    for (correctness, s) in zip(choice_correctness, strategies):
         h, = plt.plot(correctness, label=s.describe())
         handles.append(h)
     plt.legend(handles=handles, loc=4) # Lower right
